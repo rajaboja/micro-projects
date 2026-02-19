@@ -48,6 +48,7 @@ def img_to_patches(img, top_frac=0.15, y_tolerance=50, offset=5):
     top_region = cleaned.crop((0, 0, cleaned.width, top_h))
     text = pytesseract.image_to_data(top_region, output_type=pytesseract.Output.DATAFRAME)
     nums = text[text.text.astype(str).str.match(r'^\d+[.,]?$', na=False)]
+    if nums.empty: return [cleaned]
     min_top = nums['top'].min()
     col_starts = sorted(nums[nums['top'] < min_top + y_tolerance]['left'].tolist())
     header_img = cleaned.crop((0, 0, cleaned.width, max(0, min_top-offset)))
