@@ -11,7 +11,8 @@ DPI = 300
 def parse_songs(txt):
     "Extract structured song data from OCR text"
     pattern = r'^(?=[^a-z0-9 ]*[A-Z])[^a-z]+$'
-    song_re = re.compile(r'(\d+)[.,]\s*(.+?)\s+Film:\s*(.+?)(?:\s+Artistes?:\s*(.+?))?(?=\n\d+[.,]\s|\Z)', re.DOTALL)
+    song_re = re.compile(r'(\d+)[.,]\s*(.+?)\s+Film(?:/Album)?:\s*(.+?)(?:\s+Artistes?:\s*(.+?))?(?=\n\d+[.,]\s|\Z)', re.DOTALL)
+
     parts = re.split(f'({pattern})', txt, flags=re.MULTILINE)
     songs = []
     for i in range(1, len(parts), 2):
@@ -74,14 +75,19 @@ def process_pdf(pdf_path, out_path):
         print('\nDone!')
         doc.close()
 def main():
-    if len(sys.argv) < 2: print("Usage: python script.py <pdf_path> [output_parquet]"); sys.exit(1)
-    pdf_path = sys.argv[1]
-    txt_path = Path(pdf_path).stem + '.txt'
-    out_path = sys.argv[2] if len(sys.argv) > 2 else Path(pdf_path).stem + '.parquet'
-    process_pdf(pdf_path, txt_path)
-    songs = parse_songs(Path(txt_path).read_text())
-    df = pd.DataFrame(songs).drop_duplicates()
+    if len(sys.argv) < 2: print("Usage: python script.py <pdf1> [pdf2 ...] [-o output.parquet]"); sys.exit(1)
+    out_idx = sys.argv.index('-o') if '-o' in sys.argv else None
+    out_path = sys.argv[out_idx+1] if out_idx else 'combined_songs.parquet'
+    pdf_paths = [p for p in sys.argv[1:out_idx] if p != '-o'] if out_idx else sys.argv[1:]
+    dfs = []
+    for pdf_path in pdf_paths:
+        txt_path = Path(pdf_path).stem + '.txt'
+        process_pdf(pdf_path, txt_path)
+        df = pd.DataFrame(parse_songs(Path(txt_path).read_text()))
+        df['source'] = Path(pdf_path).stem
+        dfs.append(df)
+    df = pd.concat(dfs, ignore_index=True).drop_duplicates()
     df.to_parquet(out_path, index=False)
-    print(f'Saved {len(df)} songs to {out_path}')
+    print(f'Saved {len(df)} songs from {len(pdf_paths)} PDFs to {out_path}')
 
 if __name__ == '__main__': main()
