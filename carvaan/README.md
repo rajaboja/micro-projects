@@ -4,6 +4,8 @@ task_categories:
 language:
 - en
 - hi
+- te
+- ta
 tags:
 - music
 size_categories:
@@ -14,7 +16,8 @@ size_categories:
 
 Structured dataset of songs from the Saregama Carvaan device.
 
-Sources: https://r.saregama.com/resources/pdf/carvaan/Saregama_Carvaan_2.0_Songlist_1.0.pdf
+Sources: [Hindi](https://r.saregama.com/resources/pdf/carvaan/Saregama_Carvaan_2.0_Songlist_1.0.pdf), [Telugu](https://r.saregama.com/resources/pdf/carvaan/Saregama_Carvaan_Songlist_telugu_1.0.pdf),
+[Tamil](https://r.saregama.com/resources/pdf/carvaan/Saregama_Carvaan_Songlist_tamil_1.0.pdf)
 
 Hugging Face dataset: https://huggingface.co/datasets/rajesh-b/carvaan-songlist
 ## Fields
@@ -23,4 +26,5 @@ Hugging Face dataset: https://huggingface.co/datasets/rajesh-b/carvaan-songlist
 - title: Song title
 - film: Movie name
 - artists: Performing artists
+- source: Source filename
 
