@@ -5,12 +5,14 @@ import re
 from pathlib import Path
 import pandas as pd
 import sys
+from string import ascii_uppercase
 
+HEADER_WHITELIST = ascii_uppercase+ ' '
 DPI = 300
 
 def parse_songs(txt):
     "Extract structured song data from OCR text"
-    pattern = r'^(?=[^a-z0-9 ]*[A-Z])[^a-z]+$'
+    pattern = r'^[A-Z][^a-z]+$'
     song_re = re.compile(r'(\d+)[.,]\s*(.+?)\s+Film(?:/Album)?:\s*(.+?)(?:\s+Artistes?:\s*(.+?))?(?=\n\d+[.,]\s|\Z)', re.DOTALL)
 
     parts = re.split(f'({pattern})', txt, flags=re.MULTILINE)
@@ -21,7 +23,13 @@ def parse_songs(txt):
             artists = re.sub(r'\s+', ' ', m[4]).strip() if m[4] else ''
             songs.append(dict(section=hdr, song_number=int(m[1]), title=m[2].strip(), film=m[3].strip(), artists=artists))
     return songs
-def extract_text(img, psm=6, lang='eng'): return pytesseract.image_to_string(img, config=f'--psm {psm} --oem 1 --dpi {DPI}', lang=lang).strip()
+
+def extract_text(img, psm=6, lang='eng', whitelist=None):
+    config = f"--psm {psm} --oem 1 --dpi {DPI}"
+    if whitelist:
+        config += f' -c tessedit_char_whitelist="{whitelist}"'
+    return pytesseract.image_to_string(img, config=config, lang=lang).strip()
+
 def clean_img(
     img: Image.Image,
     contrast: float = 1.6,
@@ -58,12 +66,13 @@ def img_to_patches(img, top_frac=0.15, y_tolerance=50, offset=5):
     return [header_img] + cols
 def process_page(page, f):
     text = page.get_text()
-    if text.strip(): f.write(text + '\n\n')
+    if text.strip(): f.write(text.strip() + '\n\n')
     else:
         pix = page.get_pixmap(dpi=DPI)
         img = Image.frombytes('RGB', [pix.width, pix.height], pix.samples)
         patches = img_to_patches(img)
-        f.write('\n\n'.join([extract_text(p) for p in patches]) + '\n\n')
+        texts = [extract_text(patches[0], psm=7, whitelist=HEADER_WHITELIST)] + [extract_text(p) for p in patches[1:]]
+        f.write('\n\n'.join(texts) + '\n\n')
 
 def process_pdf(pdf_path, out_path):
     with open(out_path, 'w') as f:
