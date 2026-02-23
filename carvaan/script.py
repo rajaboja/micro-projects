@@ -8,6 +8,7 @@ import sys
 from string import ascii_uppercase
 
 HEADER_WHITELIST = ascii_uppercase+ ' '
+BLACKLIST = "{}/"
 DPI = 300
 
 def parse_songs(txt):
@@ -24,10 +25,12 @@ def parse_songs(txt):
             songs.append(dict(section=hdr, song_number=int(m[1]), title=m[2].strip(), film=m[3].strip(), artists=artists))
     return songs
 
-def extract_text(img, psm=6, lang='eng', whitelist=None):
+def extract_text(img, psm=6, lang='eng', whitelist=None,blacklist=None):
     config = f"--psm {psm} --oem 1 --dpi {DPI}"
     if whitelist:
         config += f' -c tessedit_char_whitelist="{whitelist}"'
+    if blacklist:
+        config += f' -c tessedit_char_blacklist="{blacklist}"'
     return pytesseract.image_to_string(img, config=config, lang=lang).strip()
 
 def clean_img(
@@ -71,7 +74,7 @@ def process_page(page, f):
         pix = page.get_pixmap(dpi=DPI)
         img = Image.frombytes('RGB', [pix.width, pix.height], pix.samples)
         patches = img_to_patches(img)
-        texts = [extract_text(patches[0], psm=7, whitelist=HEADER_WHITELIST)] + [extract_text(p) for p in patches[1:]]
+        texts = [extract_text(patches[0], psm=7, whitelist=HEADER_WHITELIST)] + [extract_text(p,blacklist=BLACKLIST) for p in patches[1:]]
         f.write('\n\n'.join(texts) + '\n\n')
 
 def process_pdf(pdf_path, out_path):
