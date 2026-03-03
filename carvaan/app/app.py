@@ -16,10 +16,9 @@ function onYouTubeIframeAPIReady() {
         height: '360',
         width: '360',
         events: {
-            'onReady': function() { player.loadPlaylist(vids, 0); },
             'onStateChange': function(e) {
                 if (e.data === YT.PlayerState.ENDED && player.getPlaylistIndex() >= vids.length - 1)
-                    htmx.ajax('GET', '/next', {target:'#now-playing', swap:'innerHTML'});
+                    htmx.trigger('#now-playing', 'yt-next');
             }
         }
     });
@@ -42,7 +41,7 @@ def sim(a, b, quick=False):
 
 def ytm_to_yt(title, artists='', film='', k=1):
     primary_artist = artists.split(',')[0].strip()
-    res = ytm.search(f'{title} {primary_artist}', filter='songs',ignore_spelling=True)[:10]
+    res = ytm.search(f'{title} {primary_artist}', filter='songs')[:10]
     if not res: return []
     match =[r for r in res if title.lower()==r.get('title','').lower()]
     if match:
@@ -79,7 +78,6 @@ def next():
 
 @rt('/radio')
 def get():
-    info, script = next()
     return Titled("Crvn",
-        script,
-        Grid(Div(info, id="now-playing"), Div(id="player"),style="grid-template-columns: auto 1fr;"))
+        Grid(Div(id="now-playing", hx_get="/next", hx_trigger="load, yt-next", hx_swap="innerHTML"),
+             Div(id="player"), style="grid-template-columns: 1fr 1fr 1fr;"))
