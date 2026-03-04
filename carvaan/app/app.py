@@ -39,7 +39,7 @@ def sim(a, b, quick=False):
     s = SequenceMatcher(None, a.lower(), b.lower())
     return s.quick_ratio() if quick else s.ratio()
 
-def ytm_to_yt(title, artists='', film='', k=1):
+def search_ytm(title, artists='', film='', k=1):
     primary_artist = artists.split(',')[0].strip()
     res = ytm.search(f'{title} {primary_artist}', filter='songs')[:10]
     if not res: return []
@@ -54,7 +54,7 @@ def ytm_to_yt(title, artists='', film='', k=1):
 def get_yt_id(song):
     vid = song['id']
     if not vid:
-        r = ytm_to_yt(song.title, artists=song.artists, film=song.film)[0]
+        r = search_ytm(song.title, artists=song.artists, film=song.film)[0]
         vid = r['videoId']
         dur = r.get('duration_seconds')
         con.execute('UPDATE songs SET id=?, duration=? WHERE row_id=?', (vid, dur, int(song['row_id'])))
@@ -63,7 +63,8 @@ def get_yt_id(song):
 
 def fetch_random():
     song = pd.read_sql("SELECT * FROM songs ORDER BY RANDOM() LIMIT 1", con=con).iloc[0]
-    return song, get_yt_id(song)
+    song["id"] = get_yt_id(song)
+    return song
 
 def SongInfo(song):
     return Div(
@@ -73,8 +74,8 @@ def SongInfo(song):
 
 @rt('/next')
 def next():
-    song, vid = fetch_random()
-    return SongInfo(song), Script(f"queueVideo('{vid}');")
+    song = fetch_random()
+    return SongInfo(song), Script(f"queueVideo('{song['id']}');")
 
 @rt('/radio')
 def get():
