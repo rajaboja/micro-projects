@@ -4,21 +4,22 @@ from fasthtml.common import *
 from fasthtml.jupyter import JupyUvi
 from difflib import SequenceMatcher
 from ytmusicapi import YTMusic
+import os
 
 ytm = YTMusic()
 con = sqlite3.connect('library.db', check_same_thread=False)
 
 yt_js = Script("""
 var player, vids = [];
+function loadNext() { htmx.ajax('GET', '/next', '#now-playing'); }
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
-        playerVars: { enablejsapi: 1},
-        height: '360',
-        width: '360',
+        playerVars: { enablejsapi: 1 },
         events: {
+            'onReady': loadNext,
             'onStateChange': function(e) {
                 if (e.data === YT.PlayerState.ENDED && player.getPlaylistIndex() >= vids.length - 1)
-                    htmx.trigger('#now-playing', 'yt-next');
+                    loadNext();
             }
         }
     });
@@ -27,11 +28,10 @@ function queueVideo(vid) {
     vids.push(vid);
     player.loadPlaylist(vids, vids.length - 1);
 }
-
 """)
 
 style = Style("""
-#player { filter: grayscale(100%); }
+#player { filter: grayscale(100%); aspect-ratio: 1/1; max-width: 360px; width: 100%; }
 """)
 
 app, rt = fast_app(live=True, hdrs=(Script(src="https://www.youtube.com/iframe_api"), yt_js,style))
@@ -80,5 +80,10 @@ def next():
 @rt('/radio')
 def get():
     return Titled("Crvn",
-        Grid(Div(id="now-playing", hx_get="/next", hx_trigger="load, yt-next", hx_swap="innerHTML"),
-             Div(id="player"), style="grid-template-columns: 1fr 1fr 1fr;"))
+                    Grid(Div(id="player"),
+                    Div(id="now-playing"),style="grid-template-columns: 1fr"))
+                    
+if os.environ.get("IN_SOLVEIT")=='True':
+    server = JupyUvi(app)
+else:
+    serve()
