@@ -1,8 +1,9 @@
 import pandas as pd
-fp = "micro-projects/carvaan/songlist.parquet"
-df = pd.read_parquet(fp).drop_duplicates()
-df.head()
 import numpy as np
+
+fp = "micro-projects/carvaan/songlist.parquet"
+
+df = pd.read_parquet(fp).drop_duplicates()
 
 def test_continuity(df):
     mismatches = []
