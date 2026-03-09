@@ -86,4 +86,4 @@ def get():
 if os.environ.get("IN_SOLVEIT")=='True':
     server = JupyUvi(app)
 else:
-    serve()
+    serve(port=6000)
