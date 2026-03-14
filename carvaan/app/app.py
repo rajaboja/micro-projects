@@ -11,7 +11,7 @@ con = sqlite3.connect('library.db', check_same_thread=False)
 
 yt_js = Script("""
 var player, vids = [];
-function loadNext() { htmx.ajax('GET', '/next', '#now-playing'); }
+function loadNext() { htmx.ajax('GET', '/nxt', '#now-playing'); }
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
         playerVars: { enablejsapi: 1, color: 'white' },
@@ -72,13 +72,12 @@ def SongInfo(song):
         P(Strong("Album: "), song['film']),
         P(Strong("Artists: "), song['artists']))
 
-@rt('/next')
-def next():
+@rt
+def nxt():
     song = fetch_random()
     return SongInfo(song), Script(f"queueVideo('{song['id']}');")
-
-@rt('/radio')
-def get():
+@rt
+def radio():
     return Titled("Crvn",
                     Grid(Div(id="player"),
                     Div(id="now-playing"),style="grid-template-columns: 1fr"))
