@@ -14,7 +14,7 @@ var player, vids = [];
 function loadNext() { htmx.ajax('GET', '/next', '#now-playing'); }
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
-        playerVars: { enablejsapi: 1 },
+        playerVars: { enablejsapi: 1, color: 'white' },
         events: {
             'onReady': loadNext,
             'onStateChange': function(e) {
