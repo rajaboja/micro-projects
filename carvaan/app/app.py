@@ -34,7 +34,7 @@ style = Style("""
 #player { filter: grayscale(100%); aspect-ratio: 1/1; max-width: 360px; width: 100%; }
 """)
 
-app, rt = fast_app(live=True, hdrs=(Script(src="https://www.youtube.com/iframe_api"), yt_js,style))
+app, rt = fast_app(hdrs=(Script(src="https://www.youtube.com/iframe_api"), yt_js,style))
 def sim(a, b, quick=False):
     s = SequenceMatcher(None, a.lower(), b.lower())
     return s.quick_ratio() if quick else s.ratio()
