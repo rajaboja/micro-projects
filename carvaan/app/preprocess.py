@@ -15,6 +15,7 @@ def create_songs_db(parquet_path='micro-projects/carvaan/songlist.parquet', db_p
     print(f"Loaded {len(df)} unique songs from {parquet_path}")
 
     df = df[~df["section"].isin(ignore_sections)]
+    df['artists'] = df.artists.str.replace('Music Dirctor:', ',', regex=False)
     df[["id", "duration"]] = None
     df['lang'] = np.where(df.source.str.contains('tamil'), 'ta', np.where(df.source.str.contains('telugu'), 'te', 'hi'))
     n = df.to_sql("songs", con=con, index_label="row_id",if_exists='replace')
