@@ -45,6 +45,9 @@ def search_ytm(title, artists='', film='', k=1):
     if not res: return []
     match =[r for r in res if title.lower()==r.get('title','').lower()]
     if match:
+        if film:
+            film_match = [r for r in match if film.lower() == r.get('album',{}).get('name','').lower()]
+            if film_match: return film_match[:k]
         return match[:k]
     if artists:
         for r in res[:5]: r['_score'] = sim(artists, ','.join(a.get('name','') for a in r.get('artists',[])), quick=True)
