@@ -10,7 +10,7 @@ ignore_sections = [
 def create_songs_db(parquet_path='micro-projects/carvaan/songlist.parquet', db_path='library.db'):
     con = sqlite3.connect(db_path)
     df = (pd.read_parquet(parquet_path)
-          .drop_duplicates(subset=('title', 'film', 'artists'))
+          .drop_duplicates(subset=('title', 'film'))
           .reset_index(drop=True))
     print(f"Loaded {len(df)} unique songs from {parquet_path}")
 
