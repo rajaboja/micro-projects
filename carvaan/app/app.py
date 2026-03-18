@@ -54,14 +54,42 @@ def search_ytm(title, artists='', film='', k=1):
         return sorted(res[:5], key=lambda r: r['_score'], reverse=True)[:k]
     return res[:k]
 
+async def update_album_ids(film, album_browse_id):
+    album = ytm.get_album(album_browse_id)
+    tracks = {t.get('title','').lower(): t for t in album.get('tracks', [])}
+    db_songs = pd.read_sql(
+        "SELECT row_id, title FROM songs WHERE film=? AND (id IS NULL OR id='') ORDER BY title",
+        con, params=[film])
+    db_titles = {r['title'].lower(): r for _, r in db_songs.iterrows()}
+
+    for title in db_titles.keys() & tracks.keys():
+        _update_song(db_titles[title]['row_id'], tracks[title])
+
+    unmatched_tracks = set(tracks.keys() - db_titles.keys())
+    for db_t in db_titles.keys() - tracks.keys():
+        if not unmatched_tracks: break
+        best = max(unmatched_tracks, key=lambda t: sim(db_t, t))
+        if sim(db_t, best) >= 0.9:
+            _update_song(db_titles[db_t]['row_id'], tracks[best])
+            unmatched_tracks.discard(best)
+
+    con.commit()
+
+
+def _update_song(row_id, track):
+    vid, dur = track.get('videoId'), track.get('duration_seconds')
+    if vid: con.execute('UPDATE songs SET id=?, duration=? WHERE row_id=?', (vid, dur, int(row_id)))
+
 def get_yt_id(song):
     vid = song['id']
     if not vid:
         r = search_ytm(song.title, artists=song.artists, film=song.film)[0]
-        vid = r['videoId']
-        dur = r.get('duration_seconds')
-        con.execute('UPDATE songs SET id=?, duration=? WHERE row_id=?', (vid, dur, int(song['row_id'])))
+        vid = r.get('videoId')
+        _update_song(song['row_id'], r)
         con.commit()
+        album_info = r.get('album', {})
+        if song.film and album_info.get('name','').lower() == song.film.lower() and album_info.get('id'):
+            bg_task(update_album_ids(song.film, album_info['id']))
     return vid
 
 def fetch_random():
@@ -76,7 +104,7 @@ def SongInfo(song):
         P(Strong("Artists: "), song['artists']))
 
 @rt
-def nxt():
+async def nxt():
     song = fetch_random()
     return SongInfo(song), Script(f"queueVideo('{song['id']}');")
 @rt
