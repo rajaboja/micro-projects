@@ -109,12 +109,8 @@ async def nxt():
     return SongInfo(song), Script(f"queueVideo('{song['id']}');")
 @rt
 def radio():
-    return Titled("Crvn",
-                    Grid(Div(id="player"),
-                    Div(id="now-playing"),style="grid-template-columns: 1fr"))
-                    
+    return Titled("Crvn",Div(id="player"),Div(id="now-playing"))
 if os.environ.get("IN_SOLVEIT")=='True':
     server = JupyUvi(app)
 else:
     serve(port=7000)
-
