@@ -30,3 +30,5 @@ Hugging Face dataset: https://huggingface.co/datasets/rajesh-b/carvaan-songlist
 
 ---
 Listen [here.](https://black-and-white.solveit.pub/radio)
+
+Explore & listen using [datasette-lite.](https://lite.datasette.io/?install=https://rajaboja.github.io/datasette-youtube-embed/datasette_youtube_embed-0.2-py3-none-any.whl&csv=https://github.com/rajaboja/micro-projects/blob/main/carvaan/app/songs.csv#/data/songs)
